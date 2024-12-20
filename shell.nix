@@ -3,6 +3,7 @@ mkShell {
   buildInputs = [
     cargo
     rustc
+    gdb
   ];
 
   nativeBuildInputs = [
