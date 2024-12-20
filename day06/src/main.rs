@@ -1,6 +1,6 @@
 use anyhow::Result;
 use itertools::Itertools;
-use std::{fs::File, io::{BufRead, BufReader}};
+use std::{thread, fs::File, io::{BufRead, BufReader}};
 
 #[derive(Clone,Hash,Eq,PartialEq)]
 enum Direction {
@@ -50,15 +50,25 @@ fn main() -> Result<()> {
         .count();
     println!("Part a is {}", part_a);
 
-    let mut part_b = 0;
+    let mut handles = Vec::new();
     for (row_index, row) in grid.iter().enumerate() {
         for (column_index, value) in row.iter().enumerate() {
             if *value != '.' { continue }
             let mut modified = grid.to_vec();
             modified[row_index][column_index] = '#';
-            part_b += patrol(&modified).0 as u32;
+
+            let handle = thread::spawn(move || {
+                patrol(&modified).0 as u32
+            });
+
+            handles.push(handle);
+
         }
     }
+
+    let part_b: u32 = handles.into_iter()
+        .map(|h| h.join().unwrap() )
+        .sum();
     println!("Part b is {}", part_b);
 
     Ok(())
