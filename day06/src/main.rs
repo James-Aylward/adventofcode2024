@@ -37,19 +37,29 @@ struct Snapshot {
 }
 
 fn main() -> Result<()> {
-    //let input = File::open("day06/input.txt")?;
+    let input = File::open("day06/input.txt")?;
     //let input = File::open("day06/test.txt")?;
-    let input = File::open("day06/test_block.txt")?;
     let grid = BufReader::new(input)
         .lines()
         .map(|l| l.unwrap().chars().collect::<Vec<_>>())
         .collect::<Vec<_>>();
 
-    let part_a = patrol(&grid)
+    let part_a = patrol(&grid).1
         .iter()
         .unique_by(|x| x.pos)
         .count();
     println!("Part a is {}", part_a);
+
+    let mut part_b = 0;
+    for (row_index, row) in grid.iter().enumerate() {
+        for (column_index, value) in row.iter().enumerate() {
+            if *value != '.' { continue }
+            let mut modified = grid.to_vec();
+            modified[row_index][column_index] = '#';
+            part_b += patrol(&modified).0 as u32;
+        }
+    }
+    println!("Part b is {}", part_b);
 
     Ok(())
 }
@@ -66,32 +76,27 @@ fn get_ahead(
         .and_then(|row| row.get(pos.0 as usize).copied())
 }
 
-fn patrol(grid: &Vec<Vec<char>>) -> Vec<Snapshot> {
-
+// Returns whether there is a loop, and the visited path
+fn patrol(grid: &Vec<Vec<char>>) -> (bool, Vec<Snapshot>) {
     let mut explored: Vec<Snapshot> = Vec::new();
     let mut dir = Direction::North;
     let mut pos = get_start(grid).unwrap();
 
     loop {
-
         let current = Snapshot{pos, dir: dir.clone()};
-
         if explored.contains(&current) {
-            println!("LOOP")
+            return (true, explored)
         }
-
         explored.push(current);
 
         if let Some(c) = get_ahead(&dir, &grid, pos) {
-            if c == '#' {
-                dir.rotate();
-            }
+            if c == '#' { dir.rotate() }
             let off = dir.get_offset();
             pos.0 = (pos.0 as i32 + off.0) as usize;
             pos.1 = (pos.1 as i32 + off.1) as usize;
 
         } else  {
-            return explored
+            return (false, explored)
         }
     }
 
