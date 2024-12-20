@@ -50,19 +50,24 @@ fn main() -> Result<()> {
         .count();
     println!("Part a is {}", part_a);
 
-    let part_b: u32 = path.iter()
+    let mut handles = Vec::new();
+    path.iter()
         .unique_by(|x| x.pos)
-        .map(|s| {
-
+        .filter(|x| x.pos != get_start(&grid).unwrap())
+        .for_each(|s| {
             let (x, y) = s.pos;
-            if (x, y) == get_start(&grid).unwrap() {
-                return 0;
-            }
             let mut modified = grid.to_vec();
             modified[y][x] = '#';
-            patrol(&modified).0 as u32
 
-        }).sum();
+            let handle = thread::spawn(move || {
+                patrol(&modified).0 as u32
+            });
+            handles.push(handle);
+        });
+
+    let part_b: u32 = handles.into_iter()
+        .map(|h| h.join().unwrap())
+        .sum();
 
     println!("Part b is {}", part_b);
 
