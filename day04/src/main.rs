@@ -1,36 +1,45 @@
 use std::{fs::File, io::{BufRead, BufReader}};
 
+fn get_position(
+    row: usize,
+    column: usize,
+    direction: &(i32, i32),
+    distance: usize
+) -> Option<(usize, usize)> {
+    let x: Option<usize> = (distance as i32)
+        .checked_mul(direction.0)
+        .and_then(|x| x.checked_add(column as i32))
+        .filter(|&x| x >= 0)
+        .and_then(|x| x.try_into().ok());
+
+    let y: Option<usize> = (distance as i32)
+        .checked_mul(direction.1)
+        .and_then(|x| x.checked_add(row as i32))
+        .filter(|&x| x >= 0)
+        .and_then(|x| x.try_into().ok());
+
+    // Returns Option<(usize,usize) where is one is None, return is None
+    x.zip(y)
+}
+
 fn find_word(
     grid: &Vec<Vec<char>>,
-    dir: &(i32, i32),
-    word: &str,
-    r: usize,
-    c: usize
+    direction: &(i32, i32),
+    row: usize,
+    column: usize
 ) -> bool {
-    word
+    "XMAS"
         .chars()
         .enumerate()
         .map(|(i, v)| {
-
-            let x = (i as i32)
-                .checked_mul(dir.0)
-                .and_then(|x| x.checked_add(c as i32))
-                .and_then(|x| if x >= 0 { Some(x) } else { None });
-            let y = (i as i32)
-                .checked_mul(dir.1)
-                .and_then(|x| x.checked_add(r as i32))
-                .and_then(|x| if x >= 0 { Some(x) } else { None });
-
-            if let (Some(x), Some(y)) = (x, y) {
+            if let Some((x, y)) = get_position(row, column, direction, i) {
                 // Index into row and column here. Return item == v
-                let item = grid
-                    .get(y as usize)
-                    .and_then(|row: &Vec<char>| row.get(x as usize).copied());
-                return item == Some(v)
+                grid.get(y as usize)
+                    .and_then(|row: &Vec<char>| row.get(x as usize).copied())
+                    == Some(v)
             } else {
-                return false
+                false
             }
-
         }).all(|x| x)
 }
 
@@ -43,7 +52,6 @@ fn main() -> anyhow::Result<()> {
         .map(|l| l.unwrap().chars().collect::<Vec<_>>() )
         .collect::<Vec<_>>();
 
-    let word = "XMAS";
     let directions = [
         (-1, 0), // back
         (1, 0), // forwards
@@ -55,23 +63,20 @@ fn main() -> anyhow::Result<()> {
         (-1, -1), // bottom left
     ];
 
-    let mut count: u32 = 0;
+    let mut count_a: u32 = 0;
+    let mut count_b: u32 = 0;
 
     for r in 0..grid.len() {
         for c in 0..grid[r].len() {
-
-            // Skip if not an X
-            if grid[r][c] != word.chars().nth(0).unwrap() { continue; }
-
-            count += directions
+            count_a += directions
                 .iter()
-                .map(|dir| {
-                    find_word(&grid, &dir, &word, r, c)
-                }).fold(0, |acc, x| acc + x as u32);
-        }
+                .map(|dir| find_word(&grid, &dir, r, c))
+                .fold(0, |acc, x| acc + x as u32);
+            }
     }
 
-    println!("Count is {}", count);
+    println!("Count is {}", count_a);
+    println!("Count is {}", count_b);
 
     Ok(())
 }
