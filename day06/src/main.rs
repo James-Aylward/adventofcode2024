@@ -44,31 +44,26 @@ fn main() -> Result<()> {
         .map(|l| l.unwrap().chars().collect::<Vec<_>>())
         .collect::<Vec<_>>();
 
-    let part_a = patrol(&grid).1
-        .iter()
+    let path = patrol(&grid).1;
+    let part_a = path.iter()
         .unique_by(|x| x.pos)
         .count();
     println!("Part a is {}", part_a);
 
-    let mut handles = Vec::new();
-    for (row_index, row) in grid.iter().enumerate() {
-        for (column_index, value) in row.iter().enumerate() {
-            if *value != '.' { continue }
+    let part_b: u32 = path.iter()
+        .unique_by(|x| x.pos)
+        .map(|s| {
+
+            let (x, y) = s.pos;
+            if (x, y) == get_start(&grid).unwrap() {
+                return 0;
+            }
             let mut modified = grid.to_vec();
-            modified[row_index][column_index] = '#';
+            modified[y][x] = '#';
+            patrol(&modified).0 as u32
 
-            let handle = thread::spawn(move || {
-                patrol(&modified).0 as u32
-            });
+        }).sum();
 
-            handles.push(handle);
-
-        }
-    }
-
-    let part_b: u32 = handles.into_iter()
-        .map(|h| h.join().unwrap() )
-        .sum();
     println!("Part b is {}", part_b);
 
     Ok(())
