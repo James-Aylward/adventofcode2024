@@ -26,8 +26,6 @@ fn main() -> anyhow::Result<()> {
         .map(|line| {
             is_safe(line)
         }).fold(0, |acc, x| acc + x as u32);
-    //.filter(|x| *x)
-    //.count();
     println!("Safe count is {}", count_part_one);
 
     // Part two
