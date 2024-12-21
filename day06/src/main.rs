@@ -58,11 +58,11 @@ fn main() -> Result<()> {
             let (x, y) = s.pos;
             let mut modified = grid.to_vec();
             modified[y][x] = '#';
-
             let handle = thread::spawn(move || {
-                patrol(&modified).0 as u32
+
+            patrol(&modified).0 as u32
             });
-            handles.push(handle);
+                   handles.push(handle);
         });
 
     let part_b: u32 = handles.into_iter()
@@ -70,8 +70,18 @@ fn main() -> Result<()> {
         .sum();
 
     println!("Part b is {}", part_b);
+    //todo!();
 
     Ok(())
+}
+
+fn print_grid(grid: &Vec<Vec<char>>) {
+    grid.iter()
+        .for_each(|line| {
+            let string: String = line.into_iter()
+                .collect();
+            println!("{}", string);
+        });
 }
 
 fn get_ahead(
