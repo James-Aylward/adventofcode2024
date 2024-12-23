@@ -2,7 +2,6 @@ use anyhow::Result;
 use std::{fs::File, io::{BufRead, BufReader}};
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
-use itertools::Itertools;
 
 #[derive(Clone,Debug,EnumIter)]
 enum Operation {
@@ -11,7 +10,7 @@ enum Operation {
 }
 
 impl Operation {
-    fn compute(&self, a: u32, b: u32) -> u32 {
+    fn compute(&self, a: u64, b: u64) -> u64 {
         match self {
             Operation::Times => a * b,
             Operation::Plus => a + b,
@@ -36,19 +35,19 @@ impl Operation {
 }
 
 fn main() -> Result<()> {
-    //let input = File::open("day01/input.txt")?;
-    let input = File::open("day07/test.txt")?;
+    let input = File::open("day07/input.txt")?;
+    //let input = File::open("day07/test.txt")?;
     let lines = BufReader::new(input)
         .lines()
         .map(|l| {
             l.unwrap()
                 .replace(":", "")
                 .split_whitespace()
-                .map(|n| n.parse::<u32>().unwrap())
+                .map(|n| {println!("{:?}", n); n.parse::<u64>().unwrap()})
                 .collect::<Vec<_>>()
         }).collect::<Vec<_>>();
 
-    let part_a: u32 = lines.iter()
+    let part_a: u64 = lines.iter()
         .map(|l| true_sum(l))
         .sum();
     println!("Part a is {}", part_a);
@@ -56,25 +55,23 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-fn true_sum(line: &Vec<u32>) -> u32 {
+fn true_sum(line: &Vec<u64>) -> u64 {
     // This is inefficient since we could just slice rather than recalculate
-    let combos = Operation::generate_sequence(None, line.len() - 1);
-
+    let combos = Operation::generate_sequence(None, line.len() - 2);
+    println!("{:?}", combos);
     let possible = combos.iter()
         .map(|seq| {
+            println!("---------------");
+            println!("{:?}", seq);
+            println!("{:?}", line);
             // Will apply operations
-            let r = line.iter()
-                .skip(1)
-                .tuples()
+            let r = line[0] == line.iter()
+                .skip(2) // skip total and also first item
                 .zip(seq)
-                .map(|((a, b), op)| op.compute(*a, *b))
-                .sum();
-            // TODO issue is that I'm just summing between terms
-            // maybe use fold?
-
-            line[0] == r
+                .fold(line[1], |acc, (x, op)| op.compute(acc, *x) );
+            println!("{}", r);
+            r
         }).any(|x| x);
-
-    (possible as u32) * line[0]
+    (possible as u64) * line[0]
 }
 
