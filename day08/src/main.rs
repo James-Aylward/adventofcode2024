@@ -12,6 +12,15 @@ struct Point {
     y: i32,
 }
 
+impl Point {
+    fn scale(self, k: i32) -> Self {
+        Point {
+            x: self.x * k,
+            y: self.y * k,
+        }
+    }
+}
+
 impl Add for Point {
     type Output = Point;
     fn add(self, rhs: Self) -> Self::Output {
@@ -38,36 +47,64 @@ fn main() -> Result<()> {
     let (grid, x, y) = load_file("day08/input.txt")?;
     
     let part_a = grid.values()
-        .map(|v| compute_spots(v))
+        .map(|v| compute_spots_a(v))
         .fold(Vec::new(), |mut acc, x| {
             acc.extend(x);
             acc
         }).iter()
         .unique()
-        .filter(|p| {
-            p.x >= 0 && p.y >= 0 && p.x < x && p.y < y
-        }).count();
-
+        .filter(|p| in_bounds(p, x, y))
+        .count();
     println!("{}", part_a);
+
+    let part_b = grid.values()
+        .map(|v| compute_spots_b(v, x, y))
+        .fold(Vec::new(), |mut acc, x| {
+            acc.extend(x);
+            acc
+        }).iter()
+        .unique()
+        .filter(|p| in_bounds(p, x, y))
+        .count();
+    println!("{}", part_b);
         
     Ok(())
 }
 
-fn compute_spots(points: &Vec<Point>) -> Vec<Point> {
-    let mut result = Vec::new();
+fn in_bounds(p: &Point, x: i32, y: i32) -> bool {
+    p.x >= 0 && p.y >= 0 && p.x < x && p.y < y
+}
 
+fn compute_spots_a(points: &Vec<Point>) -> Vec<Point> {
+    let mut result = Vec::new();
     for first in points {
         for second in points {
             if first == second { continue; }
-            
             let diff = *second - *first;
-
             result.push(*second + diff);
             result.push(*first - diff);
-
         }
     }
+    result
+}
 
+fn compute_spots_b(points: &Vec<Point>, x: i32, y: i32) -> Vec<Point> {
+    let mut result = Vec::new();
+    for first in points {
+        for second in points {
+            if first == second { continue; }
+            let diff = *second - *first;
+            let mut k = 1;
+            loop {
+                let a = *second + diff.scale(k);
+                let b = *first + diff.scale(k);
+                if !in_bounds(&a, x, y) && !in_bounds(&b, x, y) { break; }
+                result.push(a);
+                result.push(b);
+                k += 1;
+            }
+        }
+    }
     result
 }
 
