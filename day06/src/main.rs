@@ -60,9 +60,9 @@ fn main() -> Result<()> {
             modified[y][x] = '#';
             let handle = thread::spawn(move || {
 
-            patrol(&modified).0 as u32
+                patrol(&modified).0 as u32
             });
-                   handles.push(handle);
+            handles.push(handle);
         });
 
     let part_b: u32 = handles.into_iter()
